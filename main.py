@@ -8,9 +8,6 @@ from aiogram.types import BotCommand
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from sqlalchemy.orm import sessionmaker
 
-from common.models.entry_point import EntryPoint
-from common.models.block import Block
-from common.models.option import Option
 from config import load_config
 from core.filters.role import RoleFilter, AdminFilter
 from core.handlers.admin import register_admin
@@ -19,9 +16,7 @@ from core.middlewares.db import DbMiddleware
 from core.middlewares.role import RoleMiddleware
 from core.middlewares.exists_user import ExistsUserMiddleware
 from core.utils.variables import scheduler
-from services.db.pool_creater import create_pool
-
-from services.api.itsreg import ItsRegApi
+from services.db.data import data
 
 logger = logging.getLogger(__name__)
 
@@ -50,20 +45,13 @@ async def main():
     config = load_config("config.ini")
 
     storage = MemoryStorage()
-    pool: sessionmaker = await create_pool(
-        user=config.db.user,
-        password=config.db.password,
-        address=config.db.address,
-        name=config.db.name,
-        echo=False,
-    )
 
     bot = Bot(token=config.tg_bot.token)
     await set_commands(bot)
     dp = Dispatcher(bot, storage=storage)
-    dp.middleware.setup(DbMiddleware(pool))
+    dp.middleware.setup(DbMiddleware(data))
     dp.middleware.setup(RoleMiddleware(config.tg_bot.admin_ids))
-    dp.middleware.setup(ExistsUserMiddleware(pool))
+    dp.middleware.setup(ExistsUserMiddleware(data))
     dp.filters_factory.bind(RoleFilter)
     dp.filters_factory.bind(AdminFilter)
 

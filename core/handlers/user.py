@@ -1,7 +1,3 @@
-import json
-import random
-import asyncio
-
 import requests
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
@@ -17,7 +13,7 @@ from services.db.repository import Repo
 from core.utils.keyboards import *
 
 
-async def start(message: Message, state: FSMContext, repo: Repo):
+async def start(message: Message, state: FSMContext):
     await state.finish()
 
     await message.answer(
@@ -30,10 +26,8 @@ async def start(message: Message, state: FSMContext, repo: Repo):
 async def my_bots(call: CallbackQuery, state: FSMContext, repo: Repo):
     await state.finish()
 
-    me = await repo.get_user(call.from_user.id)
-    api = ItsRegApi(me.uuid, me.token if me.token else None)
-    if not me.token:
-        await repo.update_user(me.uuid, token=api.token)
+    token = repo.update_user(call.from_user.id)
+    api = ItsRegApi(call.from_user.id, token)
     bots = api.get_bots()
     await call.answer()
     if not bots:
@@ -41,9 +35,10 @@ async def my_bots(call: CallbackQuery, state: FSMContext, repo: Repo):
             "У вас нет ботов, давайте создадим новый!",
             reply_markup=get_my_no_bots_keyboard(),
         )
+    print(token)
 
 
-async def new_bot(call: CallbackQuery, state: FSMContext, repo: Repo):
+async def new_bot(call: CallbackQuery, state: FSMContext):
     await state.finish()
 
     await call.answer()
@@ -171,41 +166,34 @@ async def new_bot_here_final_text(message: Message, repo: Repo, state: FSMContex
     data = await state.get_data()
     print(data)
 
-    me = await repo.get_user(message.from_id)
-    api = ItsRegApi(me.uuid, me.token if me.token else None)
-    if not me.token:
-        await repo.update_user(me.uuid, token=api.token)
-
+    token = repo.update_user(message.from_id)
+    api = ItsRegApi(message.from_id, token)
     blocks = [Block(block_type="message", state=1, next_state=2, title="Приветствие", text=data["start_text"])]
-    entries = [EntryPoint("start", 1)]
     last_state = 2
     if data["name_text"]:
         blocks.append(
             Block(block_type="question", state=last_state, next_state=last_state + 1, title="ФИО",
                   text=data["name_text"])
         )
-        entries.append(EntryPoint("name_text", last_state))
         last_state += 1
     if data["group_text"]:
         blocks.append(
             Block(block_type="question", state=last_state, next_state=last_state + 1, title="Группа",
                   text=data["group_text"])
         )
-        entries.append(EntryPoint("group_text", last_state))
         last_state += 1
     blocks.append(
         Block(block_type="selection", state=last_state, next_state=last_state + 1, title="Подтверждение",
               text=data["group_text"], options=[Option(option, last_state + 1) for option in data["options"]])
     )
-    entries.append(EntryPoint("apply", last_state))
-    blocks.append(Block(block_type="message", state=last_state + 1, next_state=last_state + 1, title="Финал", text=data["final_text"]))
-    entries.append(EntryPoint("final", last_state + 1))
+    blocks.append(Block(block_type="message", state=last_state + 1, next_state=last_state + 1, title="Финал",
+                        text=data["final_text"]))
 
     res = api.create_bot(
         data["username"],
         data["name"],
         data["token"],
-        entries=entries,
+        entries=[EntryPoint("start", 1)],
         blocks=blocks,
     )
     print(res)

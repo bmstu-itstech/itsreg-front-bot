@@ -14,7 +14,7 @@ class Block:
         data = {
             "type": self.block_type,
             "state": self.state,
-            "next_state": self.next_state,
+            "nextState": self.next_state,
             "title": self.title,
             "text": self.text,
         }

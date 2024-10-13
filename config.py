@@ -3,14 +3,6 @@ from dataclasses import dataclass
 
 
 @dataclass
-class DbConfig:
-    user: str
-    password: str
-    address: str
-    name: str
-
-
-@dataclass
 class TgBot:
     token: str
     admin_ids: list[int]
@@ -24,7 +16,6 @@ class Auth:
 @dataclass
 class Config:
     tg_bot: TgBot
-    db: DbConfig
     auth: Auth
 
 
@@ -32,7 +23,6 @@ def cast_bool(value: str) -> bool:
     if not value:
         return False
     return value.lower() in ("true", "t", "1", "yes", "y")
-
 
 
 def load_config(path: str):
@@ -46,7 +36,6 @@ def load_config(path: str):
             token=tg_bot["token"],
             admin_ids=list(map(int, tg_bot["admin_ids"].split(", "))),
         ),
-        db=DbConfig(**config_["db"]),
         auth=Auth(**config_["auth"]),
     )
 

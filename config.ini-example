@@ -2,11 +2,5 @@
 token = token
 admin_ids = 1, 2
 
-[db]
-user = postgres
-password = pass
-address = localhost
-name = its-reg-front-bot
-
 [auth]
 secret = secret

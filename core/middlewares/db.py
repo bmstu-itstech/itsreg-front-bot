@@ -1,7 +1,7 @@
 from aiogram.dispatcher.middlewares import LifetimeControllerMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.db.repository import Repo
+from services.db.data import data as db_data
 
 
 class DbMiddleware(LifetimeControllerMiddleware):
@@ -12,12 +12,7 @@ class DbMiddleware(LifetimeControllerMiddleware):
         self.pool = pool
 
     async def pre_process(self, obj, data, *args):
-        db: AsyncSession = self.pool()
-        data["db"] = db
-        data["repo"] = Repo(db)
+        data["repo"] = Repo(db_data)
 
     async def post_process(self, obj, data, *args):
         del data["repo"]
-        db = data.get("db")
-        if db:
-            await db.close()

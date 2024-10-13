@@ -22,10 +22,6 @@ class ExistsUserMiddleware(BaseMiddleware):
         if get_update is not None and not get_update.from_user.is_bot:
             this_user = get_update.from_user
 
-            db: AsyncSession = self.pool()
-            repo = Repo(db)
+            repo = Repo(data)
 
-            await repo.add_user(this_user.id)
-
-            if db:
-                await db.close()
+            repo.update_user(this_user.id)
