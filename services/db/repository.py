@@ -1,7 +1,5 @@
 import logging
 
-import time
-
 from common.functions import generate_token
 
 logger = logging.getLogger(__name__)

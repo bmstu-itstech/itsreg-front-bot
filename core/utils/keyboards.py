@@ -1,6 +1,3 @@
-import random
-
-from aiogram import Bot
 from aiogram import types
 
 

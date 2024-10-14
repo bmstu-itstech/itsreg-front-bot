@@ -5,7 +5,6 @@ from dataclasses import dataclass
 @dataclass
 class TgBot:
     token: str
-    admin_ids: list[int]
 
 
 @dataclass
@@ -32,10 +31,7 @@ def load_config(path: str):
     tg_bot = config_["tg_bot"]
 
     return Config(
-        tg_bot=TgBot(
-            token=tg_bot["token"],
-            admin_ids=list(map(int, tg_bot["admin_ids"].split(", "))),
-        ),
+        tg_bot=TgBot(token=tg_bot["token"]),
         auth=Auth(**config_["auth"]),
     )
 
