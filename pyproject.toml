@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "itsreg-front-bot"
+version = "0.1.0"
+description = ""
+authors = [
+    "Vladimir Ovchinnikov <acrux_tech@mail.ru>",
+    "Kirill Zhikharev <zhikh.k@gmail.com>"
+]
+license = "MIT License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+aiogram = "2.22.2"
+asyncpg = "0.26.0"
+sqlalchemy = "1.4.41"
+apscheduler = "3.10.4"
+requests = "2.32.3"
+pyjwt = "2.9.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
