@@ -36,6 +36,30 @@ def get_my_no_bots_keyboard() -> types.InlineKeyboardMarkup:
     return keyboard
 
 
+def get_bots_keyboard(bots: dict) -> types.InlineKeyboardMarkup:
+    buttons = [
+        types.InlineKeyboardButton(text=bot["name"], callback_data=f"bot_{bot['botUUID']}")
+        for bot in bots
+    ]
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.row_width = 1
+    keyboard.add(*buttons)
+    return keyboard
+
+
+def get_bot_keyboard(bot_obj: dict) -> types.InlineKeyboardMarkup:
+    buttons = [
+        types.InlineKeyboardButton(text="Остановить", callback_data=f"stop_{bot_obj['botUUID']}")
+        if bot_obj["status"] == "started" else
+        types.InlineKeyboardButton(text="Запустить", callback_data=f"start_{bot_obj['botUUID']}"),
+        types.InlineKeyboardButton(text="Рассылка", callback_data="mailing")
+    ]
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.row_width = 1
+    keyboard.add(*buttons)
+    return keyboard
+
+
 def get_bot_templates_keyboard() -> types.InlineKeyboardMarkup:
     buttons = [
         types.InlineKeyboardButton(text="Индивидуальная регистрация", callback_data="new_bot_template_0"),
@@ -60,7 +84,7 @@ def get_options_keyboard(added_buttons: list[str]) -> types.InlineKeyboardMarkup
     return keyboard
 
 
-def get_skip_keyboard()  -> types.ReplyKeyboardMarkup:
+def get_skip_keyboard() -> types.ReplyKeyboardMarkup:
     keyboard = types.ReplyKeyboardMarkup()
     keyboard.row_width = 1
     keyboard.resize_keyboard = True

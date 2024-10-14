@@ -1,3 +1,5 @@
+import asyncio
+
 import requests
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
@@ -7,6 +9,7 @@ from aiogram.types import Message, CallbackQuery, ParseMode
 from common.models.block import Block
 from common.models.entry_point import EntryPoint
 from common.models.option import Option
+from core.states.Bots import Bots
 from core.states.NewBot import NewBot
 from services.api.itsreg import ItsRegApi
 from services.db.repository import Repo
@@ -35,7 +38,51 @@ async def my_bots(call: CallbackQuery, state: FSMContext, repo: Repo):
             "У вас нет ботов, давайте создадим новый!",
             reply_markup=get_my_no_bots_keyboard(),
         )
-    print(token)
+    await call.message.edit_text(
+        "Ваши боты",
+        reply_markup=get_bots_keyboard(bots),
+    )
+    await state.set_state(Bots.here_click)
+    await state.update_data(bots=bots)
+
+
+async def my_bot(call: CallbackQuery, state: FSMContext, repo: Repo):
+    bot_uuid = call.data.split("_")[-1]
+    data = await state.get_data()
+    bots = data["bots"]
+    bot_obj = [bot for bot in bots if bot["botUUID"] == bot_uuid][0]
+    await state.update_data(bot_obj=bot_obj)
+    await call.message.edit_text(
+        "Настройки бота",
+        reply_markup=get_bot_keyboard(bot_obj),
+    )
+    await state.finish()
+
+
+async def start_my_bot(call: CallbackQuery, repo: Repo):
+    bot_uuid = call.data.split("_")[-1]
+    token = repo.update_user(call.from_user.id)
+    api = ItsRegApi(call.from_user.id, token)
+    api.start_bot(bot_uuid)
+    await call.answer("Запрос на старт отправлен!")
+    await asyncio.sleep(3)          # fix
+    bot_obj = api.get_bot(bot_uuid)
+    await call.message.edit_reply_markup(get_bot_keyboard(bot_obj))
+
+
+async def stop_my_bot(call: CallbackQuery, repo: Repo):
+    bot_uuid = call.data.split("_")[-1]
+    token = repo.update_user(call.from_user.id)
+    api = ItsRegApi(call.from_user.id, token)
+    api.stop_bot(bot_uuid)
+    await call.answer("Запрос на остановку отправлен!")
+    await asyncio.sleep(3)          # fix
+    bot_obj = api.get_bot(bot_uuid)
+    await call.message.edit_reply_markup(get_bot_keyboard(bot_obj))
+
+
+async def mailing_my_bot(call: CallbackQuery, repo: Repo):
+    await call.answer("В разработке (:")
 
 
 async def new_bot(call: CallbackQuery, state: FSMContext):
@@ -164,7 +211,6 @@ async def new_bot_apply_buttons(call: CallbackQuery, state: FSMContext):
 async def new_bot_here_final_text(message: Message, repo: Repo, state: FSMContext):
     await state.update_data(final_text=message.text)
     data = await state.get_data()
-    print(data)
 
     token = repo.update_user(message.from_id)
     api = ItsRegApi(message.from_id, token)
@@ -184,9 +230,9 @@ async def new_bot_here_final_text(message: Message, repo: Repo, state: FSMContex
         last_state += 1
     blocks.append(
         Block(block_type="selection", state=last_state, next_state=last_state + 1, title="Подтверждение",
-              text=data["group_text"], options=[Option(option, last_state + 1) for option in data["options"]])
+              text=data["apply_text"], options=[Option(option, last_state + 1) for option in data["options"]])
     )
-    blocks.append(Block(block_type="message", state=last_state + 1, next_state=last_state + 1, title="Финал",
+    blocks.append(Block(block_type="message", state=last_state + 1, next_state=last_state + 2, title="Финал",
                         text=data["final_text"]))
 
     res = api.create_bot(
@@ -196,12 +242,17 @@ async def new_bot_here_final_text(message: Message, repo: Repo, state: FSMContex
         entries=[EntryPoint("start", 1)],
         blocks=blocks,
     )
-    print(res)
+    await message.answer("Бот создан!")
+    await state.finish()
 
 
 def register_user(dp: Dispatcher):
     dp.register_message_handler(start, commands=["start"], state="*")
     dp.register_callback_query_handler(my_bots, Text("my_bots"), state="*")
+    dp.register_callback_query_handler(my_bot, Text(startswith="bot"), state=Bots.here_click)
+    dp.register_callback_query_handler(start_my_bot, Text(startswith="start"), state="*")
+    dp.register_callback_query_handler(stop_my_bot, Text(startswith="stop"), state="*")
+    dp.register_callback_query_handler(mailing_my_bot, Text(startswith="mailing"), state="*")
     dp.register_callback_query_handler(new_bot, Text("new_bot"), state="*")
     dp.register_message_handler(new_bot_here_token, state=NewBot.here_token)
     dp.register_message_handler(new_bot_here_username, state=NewBot.here_username)

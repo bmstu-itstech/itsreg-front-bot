@@ -63,7 +63,18 @@ class ItsRegApi:
             "entries": [entry_point.__dict__ for entry_point in entries],
             "blocks": [block.__dict__() for block in blocks],
         }
+        print(data)
         return self.put("bots", data)
 
     def get_bots(self):
         return self.get("bots")
+
+    def get_bot(self, uuid: str):
+        return self.get(f"bots/{uuid}")
+
+    def start_bot(self, uuid: str):
+        return self.post(f"bots/{uuid}/start")
+
+    def stop_bot(self, uuid: str):
+        return self.post(f"bots/{uuid}/stop")
+
