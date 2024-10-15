@@ -8,6 +8,11 @@ class TgBot:
 
 
 @dataclass
+class BotsService:
+    base_url: str
+
+
+@dataclass
 class Auth:
     secret: str
 
@@ -15,6 +20,7 @@ class Auth:
 @dataclass
 class Config:
     tg_bot: TgBot
+    bots_service: BotsService
     auth: Auth
 
 
@@ -33,6 +39,7 @@ def load_config(path: str):
     return Config(
         tg_bot=TgBot(token=tg_bot["token"]),
         auth=Auth(**config_["auth"]),
+        bots_service=BotsService(**config_["bots_service"]),
     )
 
 

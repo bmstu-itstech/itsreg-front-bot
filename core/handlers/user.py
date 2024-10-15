@@ -6,14 +6,14 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery, ParseMode
 
-from common.models.block import Block
-from common.models.entry_point import EntryPoint
-from common.models.option import Option
+from config import config
 from core.states.Bots import Bots
 from core.states.NewBot import NewBot
-from services.api.itsreg import ItsRegApi
 from services.db.repository import Repo
 from core.utils.keyboards import *
+
+from services.api.bots import models
+from services.api.bots.api.default import get_bots, get_bot, start_bot, stop_bot, create_bot
 
 
 async def start(message: Message, state: FSMContext):
@@ -28,10 +28,11 @@ async def start(message: Message, state: FSMContext):
 
 async def my_bots(call: CallbackQuery, state: FSMContext, repo: Repo):
     await state.finish()
-
     token = repo.update_user(call.from_user.id)
-    api = ItsRegApi(call.from_user.id, token)
-    bots = api.get_bots()
+
+    client = get_bots.AuthenticatedClient(token=token, base_url=config.bots_service.base_url)
+    bots: list[get_bots.Bot] = await get_bots.asyncio(client=client)
+
     await call.answer()
     if not bots:
         return await call.message.edit_text(
@@ -40,17 +41,17 @@ async def my_bots(call: CallbackQuery, state: FSMContext, repo: Repo):
         )
     await call.message.edit_text(
         "Ваши боты",
-        reply_markup=get_bots_keyboard(bots),
+        reply_markup=get_bots_keyboard(bots)
     )
     await state.set_state(Bots.here_click)
     await state.update_data(bots=bots)
 
 
 async def my_bot(call: CallbackQuery, state: FSMContext, repo: Repo):
-    bot_uuid = call.data.split("_")[-1]
+    bot_uuid = "_".join(call.data.split("_")[1:])
     data = await state.get_data()
     bots = data["bots"]
-    bot_obj = [bot for bot in bots if bot["botUUID"] == bot_uuid][0]
+    bot_obj = [bot for bot in bots if bot.bot_uuid == bot_uuid][0]
     await state.update_data(bot_obj=bot_obj)
     await call.message.edit_text(
         "Настройки бота",
@@ -59,25 +60,33 @@ async def my_bot(call: CallbackQuery, state: FSMContext, repo: Repo):
     await state.finish()
 
 
+
 async def start_my_bot(call: CallbackQuery, repo: Repo):
-    bot_uuid = call.data.split("_")[-1]
+    bot_uuid = "_".join(call.data.split("_")[1:])
     token = repo.update_user(call.from_user.id)
-    api = ItsRegApi(call.from_user.id, token)
-    api.start_bot(bot_uuid)
+
+    client = start_bot.AuthenticatedClient(token=token, base_url=config.bots_service.base_url)
+    await start_bot.asyncio(client=client, uuid=bot_uuid)
+
     await call.answer("Запрос на старт отправлен!")
-    await asyncio.sleep(3)          # fix
-    bot_obj = api.get_bot(bot_uuid)
+    await asyncio.sleep(3)
+
+    client = get_bot.AuthenticatedClient(token=token, base_url=config.bots_service.base_url)
+    bot_obj: Bot = await get_bot.asyncio(uuid=bot_uuid, client=client)
     await call.message.edit_reply_markup(get_bot_keyboard(bot_obj))
 
 
 async def stop_my_bot(call: CallbackQuery, repo: Repo):
-    bot_uuid = call.data.split("_")[-1]
+    bot_uuid = "_".join(call.data.split("_")[1:])
     token = repo.update_user(call.from_user.id)
-    api = ItsRegApi(call.from_user.id, token)
-    api.stop_bot(bot_uuid)
+
+    client = stop_bot.AuthenticatedClient(token=token, base_url=config.bots_service.base_url)
+    await stop_bot.asyncio(client=client, uuid=bot_uuid)
+
     await call.answer("Запрос на остановку отправлен!")
-    await asyncio.sleep(3)          # fix
-    bot_obj = api.get_bot(bot_uuid)
+    await asyncio.sleep(3)
+
+    bot_obj: Bot = await get_bot.asyncio(uuid=bot_uuid, client=client)
     await call.message.edit_reply_markup(get_bot_keyboard(bot_obj))
 
 
@@ -140,10 +149,7 @@ async def new_bot_here_template(call: CallbackQuery, state: FSMContext):
 
 async def new_bot_here_start_text(message: Message, state: FSMContext):
     await state.update_data(start_text=message.text)
-    await message.answer(
-        "Введите текст для вопроса ввода ФИО",
-        reply_markup=get_skip_keyboard(),
-    )
+    await message.answer("Введите текст для вопроса ввода ФИО")
     await state.set_state(NewBot.here_name_text)
 
 
@@ -152,10 +158,7 @@ async def new_bot_here_name_text(message: Message, state: FSMContext):
         await state.update_data(name_text=None)
     else:
         await state.update_data(name_text=message.text)
-    await message.answer(
-        "Введите текст для вопроса ввода ГРУППЫ",
-        reply_markup=get_skip_keyboard(),
-    )
+    await message.answer("Введите текст для вопроса ввода ГРУППЫ")
     await state.set_state(NewBot.here_group_text)
 
 
@@ -208,40 +211,32 @@ async def new_bot_apply_buttons(call: CallbackQuery, state: FSMContext):
     await state.set_state(NewBot.here_final_text)
 
 
+
 async def new_bot_here_final_text(message: Message, repo: Repo, state: FSMContext):
     await state.update_data(final_text=message.text)
     data = await state.get_data()
 
     token = repo.update_user(message.from_id)
-    api = ItsRegApi(message.from_id, token)
-    blocks = [Block(block_type="message", state=1, next_state=2, title="Приветствие", text=data["start_text"])]
-    last_state = 2
-    if data["name_text"]:
-        blocks.append(
-            Block(block_type="question", state=last_state, next_state=last_state + 1, title="ФИО",
-                  text=data["name_text"])
-        )
-        last_state += 1
-    if data["group_text"]:
-        blocks.append(
-            Block(block_type="question", state=last_state, next_state=last_state + 1, title="Группа",
-                  text=data["group_text"])
-        )
-        last_state += 1
-    blocks.append(
-        Block(block_type="selection", state=last_state, next_state=last_state + 1, title="Подтверждение",
-              text=data["apply_text"], options=[Option(option, last_state + 1) for option in data["options"]])
-    )
-    blocks.append(Block(block_type="message", state=last_state + 1, next_state=last_state + 2, title="Финал",
-                        text=data["final_text"]))
 
-    res = api.create_bot(
+    blocks = [
+        models.Block(type=models.BlockType.MESSAGE,  state=1, next_state=2, title="Приветствие", text=data["start_text"]),
+        models.Block(type=models.BlockType.QUESTION, state=2, next_state=3, title="ФИО",         text=data["name_text"]),
+        models.Block(type=models.BlockType.QUESTION, state=3, next_state=4, title="Группа",      text=data["group_text"]),
+        models.Block(type=models.BlockType.MESSAGE,  state=4, next_state=0, title="Финал",       text=data["final_text"]),
+    ]
+    entries = [
+        models.EntryPoint(key="start", state=1)
+    ]
+
+    client = create_bot.AuthenticatedClient(token=token, base_url=config.bots_service.base_url)
+    await create_bot.asyncio(client=client, body=create_bot.PostBots(
         data["username"],
         data["name"],
         data["token"],
-        entries=[EntryPoint("start", 1)],
-        blocks=blocks,
-    )
+        entries,
+        blocks,
+    ))
+
     await message.answer("Бот создан!")
     await state.finish()
 
