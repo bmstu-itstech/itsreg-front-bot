@@ -17,6 +17,7 @@ class AuthMiddleware(LifetimeControllerMiddleware):
         self.login_client = register_user.Client(base_url=config.auth.base_url)
 
     async def pre_process(self, obj, data, *args):
+        # TODO: сделать кеширование токена
         login = obj.from_user.username
         password = str(obj.from_user.id)
         res: login_user.Response[Authenticated] = await login_user.asyncio_detailed(
