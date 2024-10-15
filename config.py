@@ -5,18 +5,23 @@ from dataclasses import dataclass
 @dataclass
 class TgBot:
     token: str
-    admin_ids: list[int]
 
 
 @dataclass
-class Auth:
-    secret: str
+class BotsService:
+    base_url: str
+
+
+@dataclass
+class AuthService:
+    base_url: str
 
 
 @dataclass
 class Config:
     tg_bot: TgBot
-    auth: Auth
+    bots: BotsService
+    auth: AuthService
 
 
 def cast_bool(value: str) -> bool:
@@ -32,11 +37,9 @@ def load_config(path: str):
     tg_bot = config_["tg_bot"]
 
     return Config(
-        tg_bot=TgBot(
-            token=tg_bot["token"],
-            admin_ids=list(map(int, tg_bot["admin_ids"].split(", "))),
-        ),
-        auth=Auth(**config_["auth"]),
+        tg_bot=TgBot(token=tg_bot["token"]),
+        auth=AuthService(**config_["auth"]),
+        bots=BotsService(**config_["bots"]),
     )
 
 

@@ -1,8 +1,6 @@
-import random
-
-from aiogram import Bot
 from aiogram import types
 
+from services.bots.models.bot import Bot, BotStatus
 
 def get_admin_keyboard() -> types.InlineKeyboardMarkup:
     buttons = [
@@ -36,9 +34,9 @@ def get_my_no_bots_keyboard() -> types.InlineKeyboardMarkup:
     return keyboard
 
 
-def get_bots_keyboard(bots: dict) -> types.InlineKeyboardMarkup:
+def get_bots_keyboard(bots: list[Bot]) -> types.InlineKeyboardMarkup:
     buttons = [
-        types.InlineKeyboardButton(text=bot["name"], callback_data=f"bot_{bot['botUUID']}")
+        types.InlineKeyboardButton(text=bot.name, callback_data=f"bot_{bot.bot_uuid}")
         for bot in bots
     ]
     keyboard = types.InlineKeyboardMarkup()
@@ -47,11 +45,11 @@ def get_bots_keyboard(bots: dict) -> types.InlineKeyboardMarkup:
     return keyboard
 
 
-def get_bot_keyboard(bot_obj: dict) -> types.InlineKeyboardMarkup:
+def get_bot_keyboard(bot_obj: Bot) -> types.InlineKeyboardMarkup:
     buttons = [
-        types.InlineKeyboardButton(text="Остановить", callback_data=f"stop_{bot_obj['botUUID']}")
-        if bot_obj["status"] == "started" else
-        types.InlineKeyboardButton(text="Запустить", callback_data=f"start_{bot_obj['botUUID']}"),
+        types.InlineKeyboardButton(text="Остановить", callback_data=f"stop_{bot_obj.bot_uuid}")
+        if bot_obj.status == BotStatus.STARTED else
+        types.InlineKeyboardButton(text="Запустить", callback_data=f"start_{bot_obj.bot_uuid}"),
         types.InlineKeyboardButton(text="Рассылка", callback_data="mailing")
     ]
     keyboard = types.InlineKeyboardMarkup()

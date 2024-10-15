@@ -1,4 +1,3 @@
-import json
 import os
 import asyncio
 import logging
@@ -6,17 +5,11 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from sqlalchemy.orm import sessionmaker
 
 from config import load_config
-from core.filters.role import RoleFilter, AdminFilter
-from core.handlers.admin import register_admin
 from core.handlers.user import register_user
-from core.middlewares.db import DbMiddleware
-from core.middlewares.role import RoleMiddleware
-from core.middlewares.exists_user import ExistsUserMiddleware
+from core.middlewares.auth import AuthMiddleware
 from core.utils.variables import scheduler
-from services.db.data import data
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +34,7 @@ async def main():
             logging.StreamHandler()
         ]
     )
-    logger.error("Starting bot")
+    logger.info("Starting bot")
     config = load_config("config.ini")
 
     storage = MemoryStorage()
@@ -49,15 +42,10 @@ async def main():
     bot = Bot(token=config.tg_bot.token)
     await set_commands(bot)
     dp = Dispatcher(bot, storage=storage)
-    dp.middleware.setup(DbMiddleware(data))
-    dp.middleware.setup(RoleMiddleware(config.tg_bot.admin_ids))
-    dp.middleware.setup(ExistsUserMiddleware(data))
-    dp.filters_factory.bind(RoleFilter)
-    dp.filters_factory.bind(AdminFilter)
+    dp.middleware.setup(AuthMiddleware())
 
     scheduler.start()
 
-    register_admin(dp)
     register_user(dp)
 
     try:
@@ -72,4 +60,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        logger.error("Bot stopped!")
+        logger.info("Bot stopped!")
