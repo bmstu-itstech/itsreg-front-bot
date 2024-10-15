@@ -9,11 +9,10 @@ from aiogram.types import Message, CallbackQuery, ParseMode
 from config import config
 from core.states.Bots import Bots
 from core.states.NewBot import NewBot
-from services.db.repository import Repo
 from core.utils.keyboards import *
 
-from services.api.bots import models
-from services.api.bots.api.default import get_bots, get_bot, start_bot, stop_bot, create_bot
+from services.bots import models
+from services.bots.api.default import get_bots, get_bot, start_bot, stop_bot, create_bot
 
 
 async def start(message: Message, state: FSMContext):
@@ -26,11 +25,10 @@ async def start(message: Message, state: FSMContext):
     )
 
 
-async def my_bots(call: CallbackQuery, state: FSMContext, repo: Repo):
+async def my_bots(call: CallbackQuery, state: FSMContext, token: str):
     await state.finish()
-    token = repo.update_user(call.from_user.id)
 
-    client = get_bots.AuthenticatedClient(token=token, base_url=config.bots_service.base_url)
+    client = get_bots.AuthenticatedClient(token=token, base_url=config.bots.base_url)
     bots: list[get_bots.Bot] = await get_bots.asyncio(client=client)
 
     await call.answer()
@@ -47,7 +45,7 @@ async def my_bots(call: CallbackQuery, state: FSMContext, repo: Repo):
     await state.update_data(bots=bots)
 
 
-async def my_bot(call: CallbackQuery, state: FSMContext, repo: Repo):
+async def my_bot(call: CallbackQuery, state: FSMContext):
     bot_uuid = "_".join(call.data.split("_")[1:])
     data = await state.get_data()
     bots = data["bots"]
@@ -60,37 +58,34 @@ async def my_bot(call: CallbackQuery, state: FSMContext, repo: Repo):
     await state.finish()
 
 
-
-async def start_my_bot(call: CallbackQuery, repo: Repo):
+async def start_my_bot(call: CallbackQuery, token: str):
     bot_uuid = "_".join(call.data.split("_")[1:])
-    token = repo.update_user(call.from_user.id)
 
-    client = start_bot.AuthenticatedClient(token=token, base_url=config.bots_service.base_url)
+    client = start_bot.AuthenticatedClient(token=token, base_url=config.bots.base_url)
     await start_bot.asyncio(client=client, uuid=bot_uuid)
 
     await call.answer("Запрос на старт отправлен!")
     await asyncio.sleep(3)
 
-    client = get_bot.AuthenticatedClient(token=token, base_url=config.bots_service.base_url)
-    bot_obj: Bot = await get_bot.asyncio(uuid=bot_uuid, client=client)
+    client = get_bot.AuthenticatedClient(token=token, base_url=config.bots.base_url)
+    bot_obj: models.Bot = await get_bot.asyncio(uuid=bot_uuid, client=client)
     await call.message.edit_reply_markup(get_bot_keyboard(bot_obj))
 
 
-async def stop_my_bot(call: CallbackQuery, repo: Repo):
+async def stop_my_bot(call: CallbackQuery, token: str):
     bot_uuid = "_".join(call.data.split("_")[1:])
-    token = repo.update_user(call.from_user.id)
 
-    client = stop_bot.AuthenticatedClient(token=token, base_url=config.bots_service.base_url)
+    client = stop_bot.AuthenticatedClient(token=token, base_url=config.bots.base_url)
     await stop_bot.asyncio(client=client, uuid=bot_uuid)
 
     await call.answer("Запрос на остановку отправлен!")
     await asyncio.sleep(3)
 
-    bot_obj: Bot = await get_bot.asyncio(uuid=bot_uuid, client=client)
+    bot_obj: models.Bot = await get_bot.asyncio(uuid=bot_uuid, client=client)
     await call.message.edit_reply_markup(get_bot_keyboard(bot_obj))
 
 
-async def mailing_my_bot(call: CallbackQuery, repo: Repo):
+async def mailing_my_bot(call: CallbackQuery):
     await call.answer("В разработке (:")
 
 
@@ -212,11 +207,9 @@ async def new_bot_apply_buttons(call: CallbackQuery, state: FSMContext):
 
 
 
-async def new_bot_here_final_text(message: Message, repo: Repo, state: FSMContext):
+async def new_bot_here_final_text(message: Message, state: FSMContext, token: str):
     await state.update_data(final_text=message.text)
     data = await state.get_data()
-
-    token = repo.update_user(message.from_id)
 
     blocks = [
         models.Block(type=models.BlockType.MESSAGE,  state=1, next_state=2, title="Приветствие", text=data["start_text"]),
@@ -228,7 +221,7 @@ async def new_bot_here_final_text(message: Message, repo: Repo, state: FSMContex
         models.EntryPoint(key="start", state=1)
     ]
 
-    client = create_bot.AuthenticatedClient(token=token, base_url=config.bots_service.base_url)
+    client = create_bot.AuthenticatedClient(token=token, base_url=config.bots.base_url)
     await create_bot.asyncio(client=client, body=create_bot.PostBots(
         data["username"],
         data["name"],

@@ -8,7 +8,7 @@ services/api/bots:
 	@poetry run python3 -m openapi_python_client generate \
 		--overwrite \
 		--path resources/bots.yaml \
-		--output-path services/api/bots \
+		--output-path services/bots \
 		--meta none
 
 .PHONY: services/api/auth
@@ -16,6 +16,6 @@ services/api/auth:
 	@poetry run python3 -m openapi_python_client generate \
 		--overwrite \
 		--path resources/auth.yaml \
-		--output-path services/api/auth \
+		--output-path services/auth \
 		--meta none
 

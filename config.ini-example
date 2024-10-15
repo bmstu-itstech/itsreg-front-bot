@@ -1,6 +1,8 @@
 [tg_bot]
 token = token
-admin_ids = 1, 2
+
+[bots]
+base_url = http://localhost:8400/api
 
 [auth]
-secret = secret
+base_url = http://localhost:8500/api

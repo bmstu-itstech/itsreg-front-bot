@@ -13,15 +13,15 @@ class BotsService:
 
 
 @dataclass
-class Auth:
-    secret: str
+class AuthService:
+    base_url: str
 
 
 @dataclass
 class Config:
     tg_bot: TgBot
-    bots_service: BotsService
-    auth: Auth
+    bots: BotsService
+    auth: AuthService
 
 
 def cast_bool(value: str) -> bool:
@@ -38,8 +38,8 @@ def load_config(path: str):
 
     return Config(
         tg_bot=TgBot(token=tg_bot["token"]),
-        auth=Auth(**config_["auth"]),
-        bots_service=BotsService(**config_["bots_service"]),
+        auth=AuthService(**config_["auth"]),
+        bots=BotsService(**config_["bots"]),
     )
 
 

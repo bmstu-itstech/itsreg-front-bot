@@ -1,5 +1,6 @@
 from aiogram import types
 
+from services.bots.models.bot import Bot, BotStatus
 
 def get_admin_keyboard() -> types.InlineKeyboardMarkup:
     buttons = [
@@ -32,8 +33,6 @@ def get_my_no_bots_keyboard() -> types.InlineKeyboardMarkup:
     keyboard.add(*buttons)
     return keyboard
 
-
-from services.api.bots.models.bot import Bot, BotStatus
 
 def get_bots_keyboard(bots: list[Bot]) -> types.InlineKeyboardMarkup:
     buttons = [

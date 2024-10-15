@@ -7,11 +7,9 @@ from aiogram.types import BotCommand
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 from config import load_config
-from core.handlers.admin import register_admin
 from core.handlers.user import register_user
-from core.middlewares.db import DbMiddleware
+from core.middlewares.auth import AuthMiddleware
 from core.utils.variables import scheduler
-from services.db.data import data
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +42,10 @@ async def main():
     bot = Bot(token=config.tg_bot.token)
     await set_commands(bot)
     dp = Dispatcher(bot, storage=storage)
-    dp.middleware.setup(DbMiddleware(data))
+    dp.middleware.setup(AuthMiddleware())
 
     scheduler.start()
 
-    register_admin(dp)
     register_user(dp)
 
     try:
