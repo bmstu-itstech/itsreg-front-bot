@@ -36,12 +36,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 
   /login:
     post:
@@ -62,12 +56,6 @@ paths:
                 $ref: '#/components/schemas/Authenticated'
         "401":
           description: Invalid credentials.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected server error
           content:
             application/json:
               schema:
@@ -93,12 +81,6 @@ paths:
                 $ref: '#/components/schemas/User'
         "404":
           description: User not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        default:
-          description: Unexpected server error
           content:
             application/json:
               schema:
