@@ -7,8 +7,8 @@ from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery, ParseMode
 
 from config import config
-from core.states.Bots import Bots
 from core.states.NewBot import NewBot
+from core.utils.functions import get_bot_repr
 from core.utils.keyboards import *
 
 from core.handlers import templates
@@ -39,26 +39,22 @@ async def my_bots(call: CallbackQuery, state: FSMContext, token: str):
             "У Вас нет ботов, давайте создадим новый!",
             reply_markup=get_my_no_bots_keyboard(),
         )
-    print(bots)
     await call.message.edit_text(
         "Список телеграм-ботов.",
         reply_markup=get_bots_keyboard(bots)
     )
-    await state.set_state(Bots.here_click)
-    await state.update_data(bots=bots)
 
 
-async def my_bot(call: CallbackQuery, state: FSMContext):
+async def my_bot(call: CallbackQuery, state: FSMContext, token: str):
     bot_uuid = "_".join(call.data.split("_")[1:])
-    data = await state.get_data()
-    bots = data["bots"]
-    bot_obj = [bot for bot in bots if bot.bot_uuid == bot_uuid][0]
-    await state.update_data(bot_obj=bot_obj)
+
+    client = get_bot.AuthenticatedClient(token=token, base_url=config.bots.base_url)
+    bot_obj: models.Bot = await get_bot.asyncio(uuid=bot_uuid, client=client)
     await call.message.edit_text(
-        "Настройки бота",
+        get_bot_repr(bot_obj),
         reply_markup=get_bot_keyboard(bot_obj),
+        parse_mode=ParseMode.HTML,
     )
-    await state.finish()
 
 
 async def start_my_bot(call: CallbackQuery, token: str):
@@ -72,7 +68,11 @@ async def start_my_bot(call: CallbackQuery, token: str):
 
     client = get_bot.AuthenticatedClient(token=token, base_url=config.bots.base_url)
     bot_obj: models.Bot = await get_bot.asyncio(uuid=bot_uuid, client=client)
-    await call.message.edit_reply_markup(get_bot_keyboard(bot_obj))
+    await call.message.edit_text(
+        get_bot_repr(bot_obj),
+        reply_markup=get_bot_keyboard(bot_obj),
+        parse_mode=ParseMode.HTML,
+    )
 
 
 async def stop_my_bot(call: CallbackQuery, token: str):
@@ -85,11 +85,31 @@ async def stop_my_bot(call: CallbackQuery, token: str):
     await asyncio.sleep(3)
 
     bot_obj: models.Bot = await get_bot.asyncio(uuid=bot_uuid, client=client)
-    await call.message.edit_reply_markup(get_bot_keyboard(bot_obj))
+    await call.message.edit_text(
+        get_bot_repr(bot_obj),
+        reply_markup=get_bot_keyboard(bot_obj),
+        parse_mode=ParseMode.HTML,
+    )
 
 
 async def mailing_my_bot(call: CallbackQuery):
     await call.answer("В разработке (:")
+
+
+async def answers_my_bot(call: CallbackQuery, token: str):
+    bot_uuid = "_".join(call.data.split("_")[1:])
+    await call.answer()
+
+    await call.message.edit_text(
+        "Чтобы видеть ответы в почти реальном времени в гугл-таблицах, вставьте эту строку в любую ячейку. "
+        "Обращаем внимание, что ответы редактировать нельзя.\n\n"
+        f"```=IMPORTDATA(\"{config.bots.base_url}/api/bots/{bot_uuid}/answers?jwtToken={token}\"```\n\n"
+        "Так же можно получить ответы в формате CSV. Данный формат поддерживает любое приложение "
+        "электронных таблиц (например, Excel). Просто перейдите по ссылке, скопируйте и вставьте в таблицу.\n\n"
+        f"```{config.bots.base_url}/api/bots/{bot_uuid}/answers?jwtToken={token}```",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=get_answers_back_keyboard(bot_uuid),
+    )
 
 
 async def new_bot(call: CallbackQuery, state: FSMContext):
@@ -246,10 +266,11 @@ async def new_bot_here_final_text(message: Message, state: FSMContext, token: st
 def register_user(dp: Dispatcher):
     dp.register_message_handler(start, commands=["start"], state="*")
     dp.register_callback_query_handler(my_bots, Text("my_bots"), state="*")
-    dp.register_callback_query_handler(my_bot, Text(startswith="bot"), state=Bots.here_click)
+    dp.register_callback_query_handler(my_bot, Text(startswith="bot"), state="*")
     dp.register_callback_query_handler(start_my_bot, Text(startswith="start"), state="*")
     dp.register_callback_query_handler(stop_my_bot, Text(startswith="stop"), state="*")
     dp.register_callback_query_handler(mailing_my_bot, Text(startswith="mailing"), state="*")
+    dp.register_callback_query_handler(answers_my_bot, Text(startswith="answers"), state="*")
     dp.register_callback_query_handler(new_bot, Text("new_bot"), state="*")
     dp.register_message_handler(new_bot_here_token, state=NewBot.here_token)
     dp.register_message_handler(new_bot_here_username, state=NewBot.here_username)

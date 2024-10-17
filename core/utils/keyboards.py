@@ -51,7 +51,19 @@ def get_bot_keyboard(bot_obj: Bot) -> types.InlineKeyboardMarkup:
         types.InlineKeyboardButton(text="Остановить", callback_data=f"stop_{bot_obj.bot_uuid}")
         if bot_obj.status == BotStatus.STARTED else
         types.InlineKeyboardButton(text="Запустить", callback_data=f"start_{bot_obj.bot_uuid}"),
-        types.InlineKeyboardButton(text="Рассылка", callback_data="mailing")
+        types.InlineKeyboardButton(text="Рассылка", callback_data=f"mailing_{bot_obj.bot_uuid}"),
+        types.InlineKeyboardButton(text="Получить ответы", callback_data=f"answers_{bot_obj.bot_uuid}"),
+        types.InlineKeyboardButton(text="Назад", callback_data="my_bots"),
+    ]
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.row_width = 1
+    keyboard.add(*buttons)
+    return keyboard
+
+
+def get_answers_back_keyboard(bot_uuid: str) -> types.InlineKeyboardMarkup:
+    buttons = [
+        types.InlineKeyboardButton(text="Назад", callback_data=f"bot_{bot_uuid}"),
     ]
     keyboard = types.InlineKeyboardMarkup()
     keyboard.row_width = 1
