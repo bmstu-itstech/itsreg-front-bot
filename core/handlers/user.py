@@ -1,5 +1,4 @@
 import asyncio
-from xml.etree.ElementTree import parse
 
 import requests
 from aiogram import Dispatcher
@@ -40,6 +39,7 @@ async def my_bots(call: CallbackQuery, state: FSMContext, token: str):
             "У Вас нет ботов, давайте создадим новый!",
             reply_markup=get_my_no_bots_keyboard(),
         )
+    print(bots)
     await call.message.edit_text(
         "Список телеграм-ботов.",
         reply_markup=get_bots_keyboard(bots)
@@ -72,7 +72,6 @@ async def start_my_bot(call: CallbackQuery, token: str):
 
     client = get_bot.AuthenticatedClient(token=token, base_url=config.bots.base_url)
     bot_obj: models.Bot = await get_bot.asyncio(uuid=bot_uuid, client=client)
-    # TODO: тут падает, если reply_markup не изменился (а он не изменяется)
     await call.message.edit_reply_markup(get_bot_keyboard(bot_obj))
 
 
@@ -99,7 +98,8 @@ async def new_bot(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await call.message.edit_text(
         "Вставьте токен телеграм бота. "
-        "О том, что такое токен и как его получить можно узнать <a href='https://youtu.be/dQw4w9WgXcQ?si=SRYl9NpeR7VC4_Gy'>тут</a>.",
+        "О том, что такое токен и как его получить можно узнать "
+        "<a href='https://youtu.be/dQw4w9WgXcQ?si=SRYl9NpeR7VC4_Gy'>тут</a>.",
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
         reply_markup=None,
@@ -184,7 +184,7 @@ async def new_bot_here_group_text(message: Message, state: FSMContext):
         "\n"
         "Например: <i>Готов участвовать в захватывающем мероприятии (подтверждаю правильность "
         "введённых данных).</i>",
-        parse_mode = ParseMode.HTML,
+        parse_mode=ParseMode.HTML,
     )
     await state.set_state(NewBot.here_apply_text)
 
@@ -194,7 +194,7 @@ async def new_bot_here_apply_text(message: Message, state: FSMContext):
     await message.answer(
         "Введите текст <i>утвердительно</i> ответа на подтверждение правильности введённых данных.\n"
         "Например: <i>Да!</i>",
-        parse_mode = ParseMode.HTML,
+        parse_mode=ParseMode.HTML,
     )
     await state.set_state(NewBot.here_apply_yes_text)
 
@@ -204,7 +204,7 @@ async def new_bot_here_apply_yes_text(message: Message, state: FSMContext):
     await message.answer(
         "Введите текст <i>отрицательного</i> ответа на подтверждение правильности введённых данных.\n"
         "Например: <i>Назад</i>",
-        parse_mode = ParseMode.HTML,
+        parse_mode=ParseMode.HTML,
     )
     await state.set_state(NewBot.here_apply_no_text)
 
@@ -214,7 +214,7 @@ async def new_bot_here_apply_no_text(message: Message, state: FSMContext):
     await message.answer(
         "Введите текст для финального сообщения бота после окончания регистрации.\n"
         "Например: <i>Спасибо за регистрацию! Ждём на мероприятии 32 февраля в 19:00 в 345 (ГУК).</i>",
-        parse_mode = ParseMode.HTML,
+        parse_mode=ParseMode.HTML,
     )
     await state.set_state(NewBot.here_final_text)
 
@@ -223,10 +223,10 @@ async def new_bot_here_final_text(message: Message, state: FSMContext, token: st
     await state.update_data(final_text=message.text)
     data = await state.get_data()
 
-    body=templates.individual_registration_bot(
+    body = templates.individual_registration_bot(
         data["bot_uuid"],
-        data["bot_name"],
         data["bot_token"],
+        data["bot_name"],
         data["start_text"],
         data["name_text"],
         data["group_text"],
@@ -254,7 +254,8 @@ def register_user(dp: Dispatcher):
     dp.register_message_handler(new_bot_here_token, state=NewBot.here_token)
     dp.register_message_handler(new_bot_here_username, state=NewBot.here_username)
     dp.register_message_handler(new_bot_here_name, state=NewBot.here_name)
-    dp.register_callback_query_handler(new_bot_here_template, Text(startswith="new_bot_template"), state=NewBot.here_template)
+    dp.register_callback_query_handler(new_bot_here_template, Text(startswith="new_bot_template"),
+                                       state=NewBot.here_template)
     dp.register_message_handler(new_bot_here_start_text, state=NewBot.here_start_text)
     dp.register_message_handler(new_bot_here_name_text, state=NewBot.here_name_text)
     dp.register_message_handler(new_bot_here_group_text, state=NewBot.here_group_text)

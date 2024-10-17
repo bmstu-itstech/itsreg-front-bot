@@ -1,15 +1,18 @@
 import os
 import asyncio
 import logging
+import sys
 
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from cachetools import TTLCache
 
 from config import load_config
 from core.handlers.user import register_user
 from core.middlewares.auth import AuthMiddleware
 from core.utils.variables import scheduler
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +45,10 @@ async def main():
     bot = Bot(token=config.tg_bot.token)
     await set_commands(bot)
     dp = Dispatcher(bot, storage=storage)
-    dp.middleware.setup(AuthMiddleware())
+    dp["context"] = {
+        "users": TTLCache(maxsize=sys.maxsize, ttl=60*60*24),   # на один день
+    }
+    dp.middleware.setup(AuthMiddleware(dp))
 
     scheduler.start()
 

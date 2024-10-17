@@ -2,6 +2,7 @@ from aiogram import types
 
 from services.bots.models.bot import Bot, BotStatus
 
+
 def get_admin_keyboard() -> types.InlineKeyboardMarkup:
     buttons = [
         types.InlineKeyboardButton(text="Рассылка", callback_data="mailing"),

@@ -1,3 +1,6 @@
+import time
+
+from aiogram import Dispatcher
 from aiogram.dispatcher.middlewares import LifetimeControllerMiddleware
 
 from config import config
@@ -11,13 +14,17 @@ HTTP_NOT_AUTHORIZED = 401
 class AuthMiddleware(LifetimeControllerMiddleware):
     skip_patterns = ["error", "update"]
 
-    def __init__(self):
+    def __init__(self, dp: Dispatcher):
         super().__init__()
+        self.dp: Dispatcher = dp
         self.login_client = login_user.Client(base_url=config.auth.base_url)
         self.login_client = register_user.Client(base_url=config.auth.base_url)
 
     async def pre_process(self, obj, data, *args):
-        # TODO: сделать кеширование токена
+        token = self.dp["context"]["users"].get(obj.from_user.id, None)
+        if token:
+            data["token"] = token
+            return
         login = obj.from_user.username
         password = str(obj.from_user.id)
         res: login_user.Response[Authenticated] = await login_user.asyncio_detailed(
@@ -35,6 +42,7 @@ class AuthMiddleware(LifetimeControllerMiddleware):
             )
         if getattr(res.parsed, "access_token", None):
             data["token"] = res.parsed.access_token
+            self.dp["context"]["users"][obj.from_user.id] = res.parsed.access_token
 
     async def post_process(self, obj, data, *args):
         if hasattr(obj, "token"):
