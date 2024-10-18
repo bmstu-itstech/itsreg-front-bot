@@ -6,12 +6,16 @@ import sys
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+
 from cachetools import TTLCache
 
-from config import load_config
 from core.handlers.user import register_user
+from core.handlers.individual_bot import register_individual_bot
+
 from core.middlewares.auth import AuthMiddleware
 from core.utils.variables import scheduler
+
+from config import load_config
 
 
 logger = logging.getLogger(__name__)
@@ -53,6 +57,7 @@ async def main():
     scheduler.start()
 
     register_user(dp)
+    register_individual_bot(dp)
 
     try:
         await dp.start_polling(allowed_updates=["message", "callback_query"])

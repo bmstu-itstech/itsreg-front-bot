@@ -67,7 +67,7 @@ def sync_detailed(
     """Получить информацию о боте с указанным UUID.
 
     Args:
-        uuid (str):  Example: 14ab-d"740".
+        uuid (str):  Example: 14ab-d740.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -96,7 +96,7 @@ def sync(
     """Получить информацию о боте с указанным UUID.
 
     Args:
-        uuid (str):  Example: 14ab-d"740".
+        uuid (str):  Example: 14ab-d740.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -120,7 +120,7 @@ async def asyncio_detailed(
     """Получить информацию о боте с указанным UUID.
 
     Args:
-        uuid (str):  Example: 14ab-d"740".
+        uuid (str):  Example: 14ab-d740.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -147,7 +147,7 @@ async def asyncio(
     """Получить информацию о боте с указанным UUID.
 
     Args:
-        uuid (str):  Example: 14ab-d"740".
+        uuid (str):  Example: 14ab-d740.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

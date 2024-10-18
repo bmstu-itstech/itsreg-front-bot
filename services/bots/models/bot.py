@@ -22,7 +22,7 @@ class Bot:
     """Информация о боте.
 
     Attributes:
-        bot_uuid (str): Уникальный идентификатор бота. Не должен превышать длину в 36 символов. Example: 14ab-d"740".
+        bot_uuid (str): Уникальный идентификатор бота. Не должен превышать длину в 36 символов. Example: 14ab-d740.
         name (str): Имя бота. Example: Example bot.
         token (str): Телеграм токен бота. Получить токен можно в телеграм-боте @BotFather.
         status (BotStatus): Статус бота: started (запущен), stopped (не запущен), failed (ошибка запуска).
