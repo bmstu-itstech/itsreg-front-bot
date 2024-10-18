@@ -11,6 +11,7 @@ from cachetools import TTLCache
 
 from core.handlers.user import register_user
 from core.handlers.individual_bot import register_individual_bot
+from core.handlers.command_bot import register_command_bot
 
 from core.middlewares.auth import AuthMiddleware
 from core.utils.variables import scheduler
@@ -57,7 +58,8 @@ async def main():
     scheduler.start()
 
     register_user(dp)
-    register_individual_bot(dp)
+    #register_individual_bot(dp)
+    register_command_bot(dp)
 
     try:
         await dp.start_polling(allowed_updates=["message", "callback_query"])

@@ -74,8 +74,8 @@ def get_answers_back_keyboard(bot_uuid: str) -> types.InlineKeyboardMarkup:
 
 def get_bot_templates_keyboard() -> types.InlineKeyboardMarkup:
     buttons = [
-        types.InlineKeyboardButton(text="Индивидуальная регистрация", callback_data="new_bot_template_0"),
-        types.InlineKeyboardButton(text="Командная регистрация", callback_data="new_bot_template_1"),
+        types.InlineKeyboardButton(text="Индивидуальная регистрация", callback_data="new_bot_template_individual"),
+        types.InlineKeyboardButton(text="Командная регистрация", callback_data="new_bot_template_command"),
     ]
     keyboard = types.InlineKeyboardMarkup()
     keyboard.row_width = 1

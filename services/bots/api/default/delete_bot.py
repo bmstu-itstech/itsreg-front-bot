@@ -1,11 +1,10 @@
 from http import HTTPStatus
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.bot import Bot
 from ...models.error import Error
 from ...types import Response
 
@@ -25,10 +24,9 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[Bot, Error]]:
+) -> Optional[Union[Any, Error]]:
     if response.status_code == HTTPStatus.OK:
-        response_200 = Bot.from_dict(response.json())
-
+        response_200 = cast(Any, None)
         return response_200
     if response.status_code == HTTPStatus.UNAUTHORIZED:
         response_401 = Error.from_dict(response.json())
@@ -50,7 +48,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[Bot, Error]]:
+) -> Response[Union[Any, Error]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -63,7 +61,7 @@ def sync_detailed(
     uuid: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Response[Union[Bot, Error]]:
+) -> Response[Union[Any, Error]]:
     """Удаляет бота с заданным UUID.
 
     Args:
@@ -74,7 +72,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Bot, Error]]
+        Response[Union[Any, Error]]
     """
 
     kwargs = _get_kwargs(
@@ -92,7 +90,7 @@ def sync(
     uuid: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Optional[Union[Bot, Error]]:
+) -> Optional[Union[Any, Error]]:
     """Удаляет бота с заданным UUID.
 
     Args:
@@ -103,7 +101,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Bot, Error]
+        Union[Any, Error]
     """
 
     return sync_detailed(
@@ -116,7 +114,7 @@ async def asyncio_detailed(
     uuid: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Response[Union[Bot, Error]]:
+) -> Response[Union[Any, Error]]:
     """Удаляет бота с заданным UUID.
 
     Args:
@@ -127,7 +125,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Bot, Error]]
+        Response[Union[Any, Error]]
     """
 
     kwargs = _get_kwargs(
@@ -143,7 +141,7 @@ async def asyncio(
     uuid: str,
     *,
     client: Union[AuthenticatedClient, Client],
-) -> Optional[Union[Bot, Error]]:
+) -> Optional[Union[Any, Error]]:
     """Удаляет бота с заданным UUID.
 
     Args:
@@ -154,7 +152,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Bot, Error]
+        Union[Any, Error]
     """
 
     return (

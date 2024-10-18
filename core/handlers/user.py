@@ -1,16 +1,20 @@
 import asyncio
+import requests
 
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery, ParseMode
 
-from config import config
 from core.utils.functions import get_bot_repr
 from core.utils.keyboards import *
 
+from core.states import CreateBot
+
 from services.bots import models
 from services.bots.api.default import get_bots, get_bot, start_bot, stop_bot, delete_bot
+
+from config import config
 
 
 async def start(message: Message, state: FSMContext):
@@ -120,6 +124,55 @@ async def delete_my_bot(call: CallbackQuery, token: str):
     )
 
 
+async def new_bot(call: CallbackQuery, state: FSMContext):
+    await state.finish()
+
+    await call.answer()
+    await call.message.edit_text(
+        "Вставьте токен телеграм бота. "
+        "О том, что такое токен и как его получить можно узнать "
+        "<a href='https://youtu.be/dQw4w9WgXcQ?si=SRYl9NpeR7VC4_Gy'>тут</a>.",
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+        reply_markup=None,
+    )
+    await state.set_state(CreateBot.Common.here_token)
+
+
+async def new_bot_here_token(message: Message, state: FSMContext):
+    res = requests.get(f"https://api.telegram.org/bot{message.text}/getMe")
+    if res.status_code != 200:
+        return await message.answer("Это не токен. Попробуйте ещё раз.")
+    await state.update_data(bot_token=message.text)
+    await message.answer(
+        "При создании телеграм-бота @BotFather отправил кроме токена ещё и ссылку вида t.me/your_bot. "
+        "Введите эту ссылку."
+    )
+    await state.set_state(CreateBot.Common.here_username)
+
+
+async def new_bot_here_username(message: Message, state: FSMContext):
+    if message.text.startswith("https://t.me/"):
+        bot_uuid = message.text.split("/")[-1]
+    elif message.text.startswith("@"):
+        bot_uuid = message.text[1:]
+    else:
+        bot_uuid = message.text
+    await state.update_data(bot_uuid=bot_uuid)
+    await message.answer("Введите название телеграм бота.")
+    await state.set_state(CreateBot.Common.here_name)
+
+
+async def new_bot_here_name(message: Message, state: FSMContext):
+    await state.update_data(bot_name=message.text)
+    await message.answer(
+        "Сервис ITS Reg предоставляет возможность создать телеграм-бота по одному из предложенных шаблонов. "
+        "Выберите, какой шаблон больше всего подходит под Вашу задачу.",
+        reply_markup=get_bot_templates_keyboard(),
+    )
+    await state.set_state(CreateBot.Common.here_template)
+
+
 def register_user(dp: Dispatcher):
     dp.register_message_handler(start, commands=["start"], state="*")
     dp.register_callback_query_handler(my_bots, Text("my_bots"), state="*")
@@ -129,3 +182,7 @@ def register_user(dp: Dispatcher):
     dp.register_callback_query_handler(mailing_my_bot, Text(startswith="mailing"), state="*")
     dp.register_callback_query_handler(answers_my_bot, Text(startswith="answers"), state="*")
     dp.register_callback_query_handler(delete_my_bot, Text(startswith="delete"), state="*")
+    dp.register_callback_query_handler(new_bot, Text("new_bot"), state="*")
+    dp.register_message_handler(new_bot_here_token, state=CreateBot.Common.here_token)
+    dp.register_message_handler(new_bot_here_username, state=CreateBot.Common.here_username)
+    dp.register_message_handler(new_bot_here_name, state=CreateBot.Common.here_name)
