@@ -58,7 +58,7 @@ async def main():
     scheduler.start()
 
     register_user(dp)
-    #register_individual_bot(dp)
+    register_individual_bot(dp)
     register_command_bot(dp)
 
     try:

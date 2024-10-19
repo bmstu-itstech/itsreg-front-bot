@@ -27,6 +27,17 @@ async def start(message: Message, state: FSMContext):
     )
 
 
+async def start_callback(call: CallbackQuery, state: FSMContext):
+    await state.finish()
+
+    await call.answer()
+    await call.message.edit_text(
+        "Привет! Это бета-версия сервиса ITS Reg - платформы для создания телеграм-ботов.\n"
+        "Выберите действие из предложенных.",
+        reply_markup=get_start_keyboard(),
+    )
+
+
 async def my_bots(call: CallbackQuery, state: FSMContext, token: str):
     await state.finish()
 
@@ -175,6 +186,7 @@ async def new_bot_here_name(message: Message, state: FSMContext):
 
 def register_user(dp: Dispatcher):
     dp.register_message_handler(start, commands=["start"], state="*")
+    dp.register_callback_query_handler(start_callback, Text("start"), state="*")
     dp.register_callback_query_handler(my_bots, Text("my_bots"), state="*")
     dp.register_callback_query_handler(my_bot, Text(startswith="bot"), state="*")
     dp.register_callback_query_handler(start_my_bot, Text(startswith="start"), state="*")

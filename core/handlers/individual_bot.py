@@ -148,8 +148,12 @@ async def new_bot_here_final_text(message: Message, state: FSMContext, token: st
     client = create_bot.AuthenticatedClient(token=token, base_url=config.bots.base_url)
     await create_bot.asyncio(client=client, body=body)
 
-    await message.answer("Бот создан!")
+    await message.answer(
+        "Бот создан!",
+        reply_markup=get_start_keyboard(),
+    )
     await state.finish()
+
 
 def register_individual_bot(dp: Dispatcher):
     dp.register_callback_query_handler(new_bot_here_template, Text("new_bot_template_individual"),

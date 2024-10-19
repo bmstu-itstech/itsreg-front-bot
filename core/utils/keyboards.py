@@ -28,6 +28,7 @@ def get_start_keyboard() -> types.InlineKeyboardMarkup:
 def get_my_no_bots_keyboard() -> types.InlineKeyboardMarkup:
     buttons = [
         types.InlineKeyboardButton(text="Вперед!", callback_data="new_bot"),
+        types.InlineKeyboardButton("Назад", callback_data="start"),
     ]
     keyboard = types.InlineKeyboardMarkup()
     keyboard.row_width = 1
@@ -40,6 +41,7 @@ def get_bots_keyboard(bots: list[Bot]) -> types.InlineKeyboardMarkup:
         types.InlineKeyboardButton(text=bot.name, callback_data=f"bot_{bot.bot_uuid}")
         for bot in bots
     ]
+    buttons.append(types.InlineKeyboardButton("Назад", callback_data="start"))
     keyboard = types.InlineKeyboardMarkup()
     keyboard.row_width = 1
     keyboard.add(*buttons)

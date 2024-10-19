@@ -1,13 +1,10 @@
-import requests
-
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.types import Message, CallbackQuery, ParseMode
-from aiogram.types import Message, CallbackQuery, ParseMode
 
 from core.states import CreateBot
-from core.utils.keyboards import *
+from core.utils.keyboards import get_start_keyboard
 
 from services.bots.models.block import Block, BlockType
 from services.bots.models.entry_point import EntryPoint
@@ -27,7 +24,7 @@ def command_registration_bot(
         q_name_text: str,
         q_group_text: str,
         q_command_name: str,
-        q_command_size: int,
+        q_command_size_text: str,
         q_approve_text: str,
         s_approve_yes_text: str,
         s_approve_no_text: str,
@@ -38,7 +35,7 @@ def command_registration_bot(
         Block(type=BlockType.QUESTION,  state=2, next_state=3, title="ФИО",            text=q_name_text ),
         Block(type=BlockType.QUESTION,  state=3, next_state=4, title="Группа",         text=q_group_text),
         Block(type=BlockType.QUESTION,  state=4, next_state=5, title="Команда",        text=q_command_name),
-        Block(type=BlockType.QUESTION,  state=5, next_state=6, title="Размер команды", text=q_command_size),
+        Block(type=BlockType.QUESTION,  state=5, next_state=6, title="Размер команды", text=q_command_size_text),
         Block(type=BlockType.SELECTION, state=6, next_state=6, title="Подтверждение",  text=q_approve_text, options=[
             Option(text=s_approve_yes_text, next_=7),
             Option(text=s_approve_no_text,  next_=2),
@@ -89,7 +86,7 @@ async def new_bot_here_name_text(message: Message, state: FSMContext):
     await state.set_state(CreateBot.Command.here_group_text)
 
 
-async def new_bot_here_command_name(message: Message, state: FSMContext):
+async def new_bot_here_group_text(message: Message, state: FSMContext):
     await state.update_data(group_text=message.text)
     await message.answer(
         "Введите текст для вопроса названия команды.",
@@ -98,8 +95,8 @@ async def new_bot_here_command_name(message: Message, state: FSMContext):
     await state.set_state(CreateBot.Command.here_command_name_text)
 
 
-async def new_bot_here_command_size(message: Message, state: FSMContext):
-    await state.update_data(group_text=message.text)
+async def new_bot_here_command_name(message: Message, state: FSMContext):
+    await state.update_data(command_name=message.text)
     await message.answer(
         "Введите текст для вопроса количества человек в команде.",
         parse_mode=ParseMode.HTML,
@@ -107,8 +104,8 @@ async def new_bot_here_command_size(message: Message, state: FSMContext):
     await state.set_state(CreateBot.Command.here_command_size_text)
 
 
-async def new_bot_here_group_text(message: Message, state: FSMContext):
-    await state.update_data(group_text=message.text)
+async def new_bot_here_command_size(message: Message, state: FSMContext):
+    await state.update_data(command_size=message.text)
     await message.answer(
         "Введите текст для вопроса-подтверждения регистрации. После выбора утвердительного "
         "ответа на вопрос пользователь оканчивает регистрацию; при выборе отрицательного ответа "
@@ -163,7 +160,7 @@ async def new_bot_here_final_text(message: Message, state: FSMContext, token: st
         q_name_text=data["name_text"],
         q_group_text=data["group_text"],
         q_command_name=data["command_name"],
-        q_command_size=data["command_size"],
+        q_command_size_text=data["command_size"],
         q_approve_text=data["apply_text"],
         s_approve_yes_text=data["apply_yes_text"],
         s_approve_no_text=data["apply_no_text"],
@@ -173,15 +170,21 @@ async def new_bot_here_final_text(message: Message, state: FSMContext, token: st
     client = create_bot.AuthenticatedClient(token=token, base_url=config.bots.base_url)
     await create_bot.asyncio(client=client, body=body)
 
-    await message.answer("Бот создан!")
+    await message.answer(
+        "Бот создан!",
+        reply_markup=get_start_keyboard(),
+    )
     await state.finish()
+
 
 def register_command_bot(dp: Dispatcher):
     dp.register_callback_query_handler(new_bot_here_template, Text("new_bot_template_command"),
-                                       state=CreateBot.Command.here_template)
+                                       state=CreateBot.Common.here_template)
     dp.register_message_handler(new_bot_here_start_text, state=CreateBot.Command.here_start_text)
     dp.register_message_handler(new_bot_here_name_text, state=CreateBot.Command.here_name_text)
     dp.register_message_handler(new_bot_here_group_text, state=CreateBot.Command.here_group_text)
+    dp.register_message_handler(new_bot_here_command_name, state=CreateBot.Command.here_command_name_text)
+    dp.register_message_handler(new_bot_here_command_size, state=CreateBot.Command.here_command_size_text)
     dp.register_message_handler(new_bot_here_apply_text, state=CreateBot.Command.here_apply_text)
     dp.register_message_handler(new_bot_here_apply_yes_text, state=CreateBot.Command.here_apply_yes_text)
     dp.register_message_handler(new_bot_here_apply_no_text, state=CreateBot.Command.here_apply_no_text)
