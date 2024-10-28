@@ -61,7 +61,7 @@ async def new_bot_here_template(call: CallbackQuery, state: FSMContext):
         "Например: <i>Приветствую, будущий участник мероприятия!</i>",
         parse_mode=ParseMode.HTML,
         reply_markup=None)
-    await state.set_state(CreateBot.Command.here_start_text)
+    await state.set_state(CreateBot.Individual.here_start_text)
 
 
 async def new_bot_here_start_text(message: Message, state: FSMContext):
@@ -157,7 +157,7 @@ async def new_bot_here_final_text(message: Message, state: FSMContext, token: st
 
 def register_individual_bot(dp: Dispatcher):
     dp.register_callback_query_handler(new_bot_here_template, Text("new_bot_template_individual"),
-                                       state=CreateBot.Individual.here_template)
+                                       state=CreateBot.Common.here_template)
     dp.register_message_handler(new_bot_here_start_text, state=CreateBot.Individual.here_start_text)
     dp.register_message_handler(new_bot_here_name_text, state=CreateBot.Individual.here_name_text)
     dp.register_message_handler(new_bot_here_group_text, state=CreateBot.Individual.here_group_text)

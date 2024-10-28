@@ -7,6 +7,7 @@ class Common(StatesGroup):
     here_name = State()
     here_template = State()
 
+
 class Individual(Common):
     here_start_text = State()
     here_name_text = State()
@@ -15,6 +16,7 @@ class Individual(Common):
     here_apply_yes_text = State()
     here_apply_no_text = State()
     here_final_text = State()
+
 
 class Command(Common):
     here_token = State()

@@ -1,4 +1,6 @@
 import asyncio
+import re
+
 import requests
 
 from aiogram import Dispatcher
@@ -163,12 +165,15 @@ async def new_bot_here_token(message: Message, state: FSMContext):
 
 
 async def new_bot_here_username(message: Message, state: FSMContext):
-    if message.text.startswith("https://t.me/"):
-        bot_uuid = message.text.split("/")[-1]
+    matches = re.findall(r"t\.me/([a-zA-Z0-9_]+)", message.text)
+    if matches and len(matches) == 1:
+        bot_uuid = matches[0]
     elif message.text.startswith("@"):
         bot_uuid = message.text[1:]
+    elif "bot" not in message.text:
+        return await message.answer("Это не ссылка на бота")
     else:
-        bot_uuid = message.text
+        return await message.answer("Введите корректную ссылку или юзернейм")
     await state.update_data(bot_uuid=bot_uuid)
     await message.answer("Введите название телеграм бота.")
     await state.set_state(CreateBot.Common.here_name)
